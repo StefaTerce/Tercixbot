@@ -13,10 +13,5 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copia il resto del codice dell'applicazione nella directory di lavoro
 COPY bot.py .
 
-# --- IMPORTANTE PER IL DEPLOYMENT ---
-# Non includere il token direttamente qui.
-# Su Render, imposterai TELEGRAM_BOT_TOKEN come variabile d'ambiente.
-# Il file bot.py dovrebbe essere configurato per leggere da os.environ
-
 # Comando per eseguire l'applicazione quando il container si avvia
 CMD ["python", "bot.py"]
