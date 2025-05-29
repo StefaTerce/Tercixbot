@@ -1,102 +1,78 @@
-# Bot Telegram Barzellette (Jokebot)
+# Bot Telegram Barzellette (Jokebot) - Versione Webhook
 
 Questo è un semplice bot Telegram che racconta barzellette recuperandole da un'API esterna ([Official Joke API](https://official-joke-api.appspot.com/)).
+Questa versione è configurata per utilizzare **webhook** con Telegram e per essere deployata su piattaforme come Render.
 
 **ATTENZIONE:** Il token del bot Telegram è attualmente inserito direttamente nel file `bot.py`. Questa pratica non è sicura per repository pubblici o per ambienti di produzione. Si consiglia vivamente di utilizzare variabili d'ambiente per gestire i token in scenari reali.
 
+L'URL del servizio Render per questo bot è (esempio): `https://jokebot-47zu.onrender.com`
+
 ## Prerequisiti
 
-*   Python 3.7+
+*   Python 3.9+
 *   Docker (per il build dell'immagine)
 *   Un account Telegram e un token per il bot (ottenibile da @BotFather su Telegram)
 
-## Configurazione del Token
+## Configurazione (Token e URL di Render)
 
-Il token del bot è hardcodato nel file `bot.py`:
-```python
-TELEGRAM_BOT_TOKEN = "IL_TUO_TOKEN_QUI" # Sostituito con il token reale
-```
-Se devi cambiarlo, modifica questa riga direttamente nel file `bot.py`.
+*   **Token Telegram:** Hardcodato nel file `bot.py` come `TELEGRAM_BOT_TOKEN`.
+*   **URL Base di Render:** Hardcodato nel file `bot.py` come `RENDER_APP_URL_BASE`. Assicurati che corrisponda all'URL effettivo del tuo servizio su Render (es. `https://jokebot-47zu.onrender.com`).
 
-## Esecuzione Locale (Senza Docker)
+## Flusso di Deployment e Configurazione Webhook
 
-1.  **Clona il repository (o crea i file):**
-    Assicurati di avere `bot.py` e `requirements.txt` nella stessa directory.
+1.  **Aggiorna i file sorgente** (`bot.py`, `Dockerfile`, `requirements.txt`, `README.md`) nel tuo repository GitHub.
+2.  **Commit e Push** delle modifiche su GitHub.
+3.  **Render rileverà le modifiche** e avvierà un nuovo build e deploy del servizio. Assicurati che il servizio su Render sia configurato come "Web Service".
+4.  **Attendi il completamento del deploy su Render.** L'applicazione Flask (servita da Gunicorn) sarà in ascolto sull'URL fornito da Render (es. `https://jokebot-47zu.onrender.com`).
+5.  **Imposta il Webhook con Telegram (una tantum):**
+    *   Dopo che il deploy su Render è attivo e funzionante, apri un terminale nel tuo ambiente di sviluppo (es. GitHub Codespace o il tuo PC locale, con l'ultima versione di `bot.py`).
+    *   Esegui il comando:
+        ```bash
+        python bot.py setwebhook
+        ```
+    *   Questo comando utilizzerà la variabile `RENDER_APP_URL_BASE` definita in `bot.py` per costruire l'URL completo del webhook (es. `https://jokebot-47zu.onrender.com/TUO_TOKEN_BOT`) e lo registrerà con Telegram.
+    *   Controlla l'output per messaggi di successo o errore.
 
-2.  **Crea un ambiente virtuale (consigliato):**
+## Gestione del Webhook (Comandi da Terminale)
+
+Puoi gestire il webhook eseguendo `bot.py` localmente con i seguenti argomenti:
+
+*   **Impostare il webhook:**
     ```bash
-    python -m venv venv
-    source venv/bin/activate  # Su Windows: venv\Scripts\activate
+    python bot.py setwebhook
+    ```
+    (Usa l'URL `RENDER_APP_URL_BASE` hardcodato in `bot.py`)
+
+*   **Ottenere informazioni sul webhook corrente:**
+    ```bash
+    python bot.py infowebhook
     ```
 
-3.  **Installa le dipendenze:**
+*   **Eliminare il webhook:**
     ```bash
-    pip install -r requirements.txt
+    python bot.py deletewebhook
     ```
+    (Se elimini il webhook, il bot smetterà di ricevere aggiornamenti tramite webhook. Dovresti ripristinare il polling o reimpostare il webhook).
 
-4.  **Avvia il bot:**
-    ```bash
-    python bot.py
-    ```
+## Creazione dell'Immagine Docker e Push su Docker Hub (Opzionale se Render builda da GitHub)
 
-## Creazione dell'Immagine Docker e Push su Docker Hub
+Se Render builda direttamente dal tuo repository GitHub (opzione consigliata), non hai bisogno di fare build e push manuali su Docker Hub. Se invece il tuo servizio Render è configurato per usare un'immagine da un registry Docker:
 
-1.  **Assicurati che Docker sia in esecuzione.**
-
-2.  **Naviga nella directory del progetto** (dove si trovano `Dockerfile`, `bot.py`, `requirements.txt`).
-
-3.  **Build dell'immagine Docker:**
-    Sostituisci `tuoutentedockerhub` con il tuo username di Docker Hub (es. `terceros`) e `nomeimmaginebot` con il nome della tua immagine (es. `jokebot`).
-    ```bash
-    docker build -t tuoutentedockerhub/nomeimmaginebot:latest .
-    ```
-    Esempio per te:
+1.  **Build dell'immagine Docker:**
+    (Sostituisci `terceros` con il tuo username Docker Hub e `jokebot` con il nome della tua immagine)
     ```bash
     docker build -t terceros/jokebot:latest .
     ```
 
-4.  **Login su Docker Hub (se non l'hai già fatto):**
-    ```bash
-    docker login -u tuoutentedockerhub
-    ```
-    Esempio per te:
+2.  **Login su Docker Hub:**
     ```bash
     docker login -u terceros
     ```
-    Ti verranno chiesti username e password.
 
-5.  **Push dell'immagine su Docker Hub:**
-    ```bash
-    docker push tuoutentedockerhub/nomeimmaginebot:latest
-    ```
-    Esempio per te:
+3.  **Push dell'immagine su Docker Hub:**
     ```bash
     docker push terceros/jokebot:latest
     ```
-
-## Deployment su Render
-
-Render può deployare direttamente da un'immagine Docker ospitata su Docker Hub.
-
-1.  **Crea un account su [Render](https://render.com/) se non ne hai uno.**
-
-2.  **Nel dashboard di Render, clicca su "New +" e seleziona "Web Service".**
-
-3.  **Scegli "Deploy an existing image from a registry".**
-    *   **Image Path:** Inserisci il percorso della tua immagine su Docker Hub (es. `terceros/jokebot:latest`).
-
-4.  **Dai un nome al tuo servizio** (es. `jokebot-service`).
-
-5.  **Variabili d'Ambiente:**
-    *   Con il token hardcodato nel codice, **non è più necessario impostare** `TELEGRAM_BOT_TOKEN` nelle variabili d'ambiente di Render.
-
-6.  **Instance Type:** Per un bot semplice come questo, il piano gratuito ("Free") dovrebbe essere sufficiente.
-
-7.  **Start Command:** Render dovrebbe prendere il `CMD` dal Dockerfile (`python bot.py`). Non dovrebbe essere necessario modificarlo.
-
-8.  **Clicca su "Create Web Service".**
-
-Render inizierà il processo di pulling dell'immagine da Docker Hub e avvierà il container. Potrai vedere i log del deployment e dell'applicazione nel dashboard di Render.
 
 ## Comandi del Bot
 
@@ -107,8 +83,8 @@ Render inizierà il processo di pulling dell'immagine da Docker Hub e avvierà i
 
 ```
 .
-├── bot.py            # Logica principale del bot Telegram (con token hardcodato)
-├── Dockerfile        # Istruzioni per costruire l'immagine Docker
-├── requirements.txt  # Dipendenze Python
+├── bot.py            # Logica principale del bot Telegram (Flask, webhook, token hardcodato)
+├── Dockerfile        # Istruzioni per costruire l'immagine Docker (con Gunicorn)
+├── requirements.txt  # Dipendenze Python (Flask, Gunicorn, etc.)
 └── README.md         # Questo file
 ```
