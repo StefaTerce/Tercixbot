@@ -16,7 +16,7 @@ COPY bot.py .
 # --- IMPORTANTE PER IL DEPLOYMENT ---
 # Non includere il token direttamente qui.
 # Su Render, imposterai TELEGRAM_BOT_TOKEN come variabile d'ambiente.
-# ENV TELEGRAM_BOT_TOKEN="IL_TUO_TOKEN_QUI" # NON FARE QUESTO PER LA PRODUZIONE
+# Il file bot.py dovrebbe essere configurato per leggere da os.environ
 
 # Comando per eseguire l'applicazione quando il container si avvia
 CMD ["python", "bot.py"]
